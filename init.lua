@@ -763,6 +763,8 @@ do
   local ensure_installed = vim.tbl_keys(servers or {})
   vim.list_extend(ensure_installed, {
     -- You can add other tools here that you want Mason to install
+    'stylua',
+    'prettier',
   })
 
   require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -785,8 +787,9 @@ do
     format_on_save = function(bufnr)
       -- You can specify filetypes to autoformat on save here:
       local enabled_filetypes = {
-        -- lua = true,
-        -- python = true,
+            lua = true,
+            python = true,
+            json = true,
       }
       if enabled_filetypes[vim.bo[bufnr].filetype] then
         return { timeout_ms = 500 }
@@ -805,6 +808,7 @@ do
       --
       -- You can use 'stop_after_first' to run the first available formatter from the list
       -- javascript = { "prettierd", "prettier", stop_after_first = true },
+      json = { 'prettierd', 'prettier', 'jq', stop_after_first = true },
     },
   }
 
@@ -984,3 +988,182 @@ end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+-- ============================================================
+-- MARKDOWN RENDER
+-- ============================================================
+do
+  vim.pack.add { { src = gh 'MeanderingProgrammer/render-markdown.nvim' } }
+  require('render-markdown').setup {}
+end
+
+-- ============================================================
+-- FILE EXPLORER (mini.files)
+-- ============================================================
+do
+  vim.pack.add { { src = gh 'echasnovski/mini.files' } }
+  
+  require('mini.files').setup({
+    mappings = {
+      go_in_plus = '<CR>', -- Faz a tecla Enter (<CR>) abrir arquivos e pastas
+    },
+  })
+
+  vim.keymap.set('n', '<leader>e', function()
+    if not MiniFiles.close() then
+      MiniFiles.open()
+    end
+  end, { desc = 'Abrir mini.files' })
+end
+
+-- ============================================================
+-- FUZZY FINDER (Telescope)
+-- ============================================================
+do
+  vim.pack.add {
+    { src = gh 'nvim-lua/plenary.nvim' },
+    { src = gh 'nvim-telescope/telescope.nvim' },
+  }
+
+  local builtin = require('telescope.builtin')
+
+  -- Atalhos práticos para o seu dia a dia:
+  vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+  vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
+  vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = '[S]earch [B]uffers' })
+  vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
+end
+
+-- ============================================================
+-- UI & UTILITIES (Which-Key, Git, Todo)
+-- ============================================================
+do
+  vim.pack.add {
+    { src = gh 'folke/which-key.nvim' },
+    { src = gh 'lewis6991/gitsigns.nvim' },
+    { src = gh 'folke/todo-comments.nvim' },
+  }
+
+  require('which-key').setup {}
+  require('gitsigns').setup {}
+  require('todo-comments').setup {}
+end
+
+-- ============================================================
+-- FORMATTING (Conform)
+-- ============================================================
+do
+  vim.pack.add { { src = gh 'stevearc/conform.nvim' } }
+
+  require('conform').setup {
+    formatters_by_ft = {
+      python = { 'ruff_format' },
+      terraform = { 'terraform_fmt' },
+      tf = { 'terraform_fmt' },
+    },
+    format_on_save = {
+      timeout_ms = 500,
+      lsp_fallback = true,
+    },
+  }
+end
+
+-- ============================================================
+-- LSP (Python & Terraform)
+-- ============================================================
+do
+  vim.pack.add { { src = gh 'neovim/nvim-lspconfig' } }
+
+  -- Configuração nativa (Neovim 0.11+)
+  vim.lsp.config('pyright', {})
+  vim.lsp.config('ruff', {})
+  vim.lsp.config('terraformls', {})
+
+  vim.lsp.enable('pyright')
+  vim.lsp.enable('ruff')
+  vim.lsp.enable('terraformls')
+end
+
+-- ============================================================
+-- MARKDOWN RENDER & ICONS
+-- ============================================================
+do
+  vim.pack.add {
+    { src = gh 'echasnovski/mini.icons' },
+    { src = gh 'MeanderingProgrammer/render-markdown.nvim' },
+  }
+
+  require('mini.icons').setup()
+  
+  require('render-markdown').setup({
+    latex = { enabled = false },
+  })
+end
+
+
+-- ============================================================
+-- PROVIDERS CONFIG
+-- ============================================================
+vim.g.loaded_perl_provider = 0
+vim.g.python3_host_prog = vim.fn.exepath('python3')
+
+
+
+-- ============================================================
+-- TERMINAL, AUTO-PAIRS & CONTEXT
+-- ============================================================
+do
+  vim.pack.add {
+    { src = gh 'echasnovski/mini.pairs' },
+    { src = gh 'akinsho/toggleterm.nvim' },
+    { src = gh 'nvim-treesitter/nvim-treesitter-context' },
+  }
+
+  -- Auto-fechamento de parênteses, aspas e crases
+  require('mini.pairs').setup()
+
+  -- Terminal flutuante
+  require('toggleterm').setup {
+    open_mapping = [[<c-\>]],
+    direction = 'float',
+    float_opts = { border = 'curved' },
+  }
+
+  -- Contexto fixo no topo da tela
+  require('treesitter-context').setup {
+    max_lines = 3,
+    trim_scope = 'outer',
+  }
+end
+
+-- ============================================================
+-- GITHUB PR REVIEW (Octo & Diffview)
+-- ============================================================
+do
+  vim.pack.add {
+    { src = gh 'nvim-tree/nvim-web-devicons' },
+    { src = gh 'sindrets/diffview.nvim' },
+    { src = gh 'pwntester/octo.nvim' },
+  }
+
+  require('diffview').setup()
+  require('octo').setup({
+    enable_builtin = true,
+    default_merge_method = 'squash',
+  })
+end
+
+-- ============================================================
+-- MARKDOWN & MERMAID PREVIEW (Leve)
+-- ============================================================
+do
+  vim.pack.add {
+    {
+      src = gh 'iamcco/markdown-preview.nvim',
+      build = function() vim.fn['mkdp#util#install']() end,
+    },
+  }
+
+  vim.g.mkdp_filetypes = { 'markdown' }
+  vim.g.mkdp_auto_close = 1
+end
